@@ -1,44 +1,74 @@
 ---
-title: "Relatório Gerencial 2"
+title: "Relatório Gerencial - Washington D.C. Bike Sharing"
 author: "Vinicius Deolindo de Sousa - Cientista de dados"
 date: "Maio/2019"
 output:
   MyTemplates::my_html_format:
     toc: true
+    fig_caption: false
 ---
 
-# Sobre o relatório
+# Objetivo do estudo
 
-O relatório contém analise de dados, estatísticas e uma simulação de forecast com algoritmo Xgboost:
+Realizar uma analise exploratoria de dados e verificar padrões estatisticos para elaborar um modelo de demanda de aluguel de bicicletas na cidade de Washington D.C. para o proximo ano, para decidir o novo orçamento.
 
-- Analise de dados: O comportamento da serie histórica e analise de gráficos.
-- Estatísticas: Verificação de padrões ao longo do tempo.
-- Forecast: Modelagem de dados com Xgboost o modelo mais utilizado por cientista de dados no mundo.
+# Tabela de dados
 
-# Informações sobre os dados
+O conjunto de dados é fornecido com dados de aluguel por hora, abrangendo dois anos. Estamos prevendo a contagem total de bicicletas alugadas para cada hora.
 
-Os dados foram extraídos da API de dados financeiros do site yahoo!:
+```{r,fig.width=8.5,fig.height=4,echo=FALSE,fig.show="hide"}
+df = read.csv2("bikeshare.csv",fileEncoding = "latin1",sep = ",")
+df$datetime = as.Date(df$datetime)
+df$temp = as.numeric(df$temp)
+df$atemp = as.numeric(df$atemp)
+df$windspeed = as.numeric(df$windspeed)
+formattable::formattable(head(df,5))
 
-- A custom HTML footer, which is stored in `inst/rmarkdown/resources/footer.html`.
-- A custom HTML header, which is stored in `inst/rmarkdown/resources/header.html`. This adds a logo to the header of the document.
-- A custom styles file `inst/rmarkdown/resources/styles.css`, which alters the appearance of tables.
-
-# Analises
-
-The custom CSS file has been used to change the style of the document. Here is an example table:
-
-```{r table}
-knitr::kable(mtcars[1:5, 1:5], caption = "An example table")
 ```
 
-# Resumo
+# Resumo das informações
 
-As some ideas for using this template, you may wish to customise your own document:
+- Nesta tabela verificamos os padrões estatísticos das variáveis.
 
-- Change the default options used in the `my_html_format` function. For example, it will use the theme "lumen", but this could be changed to "yeti", "sandstone" etc.
-- Update the footer file to include your own name and email address, and edit the urls for the social media icons so that they they link to your account.
-- Add your own logo by altering the `header.html` file. You will notice that the URL is referenced as a URL: this is recommended as it makes your package more portable.
+```{r table,fig.width=8.5,fig.height=4,echo=FALSE,fig.show="hide"}
+df = read.csv2("bikeshare.csv",fileEncoding = "latin1",sep = ",")
+df$datetime = lubridate::as_datetime(df$datetime)
+df$temp = as.numeric(df$temp)
+df$atemp = as.numeric(df$atemp)
+df$windspeed = as.numeric(df$windspeed)
+df$season = as.factor(df$season)
+df$holiday = as.factor(df$holiday)
+df$workingday = as.factor(df$workingday)
+df$weather = as.factor(df$weather)
+knitr::kable(summary(df,digits = 2), caption = "Análise Explorátoria de dados")
 
+```
 
+# Gráfico de correlações
 
+- Existe uma correlação forte das variáveis registrados e casuais com a variavel de demanda.
 
+```{r corr,echo=FALSE}
+df = read.csv2("bikeshare.csv",fileEncoding = "latin1",sep = ",")
+df$datetime = lubridate::as_datetime(df$datetime)
+df$temp = as.numeric(df$temp)
+df$atemp = as.numeric(df$atemp)
+df$windspeed = as.numeric(df$windspeed)
+M <- cor(df[-1])
+corrplot::corrplot(M, method = "circle")
+
+```
+
+# Gráfico ao longo do tempo
+
+- No gráfico abaixo verificamos os comportamentos sazonais na demanda de bicicletas.
+
+```{r grafico1, fig.width=8.5,fig.height=4,echo=FALSE,fig.show="hide"}
+graf = ts(df[12],start = min(df$datetime) ,end = max(df$datetime),frequency = 1)
+dygraphs::dygraph(graf, main = "Qtd. aluguéis - 2011 a 2012", ylab = "Qtd. aluguéis")
+
+```
+
+# Forecast Xgboost
+
+- A modelagem realizada via o modelo xgboost.
