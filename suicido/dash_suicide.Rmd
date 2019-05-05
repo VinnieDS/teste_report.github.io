@@ -1,0 +1,129 @@
+---
+title: "Suicide Rates Overview 1985 to 2016 - Kaggle dataset"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    theme: simplex
+    runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(magrittr)
+library(shiny)
+library(tidyverse)
+library(plotly)
+library(leaflet)
+library(maps)
+library(rgdal)
+library(sp)
+library(rgeos)
+library(maptools)
+
+# ETL
+df <- read.csv2("master.csv",fileEncoding = "latin1",sep=";")
+df %<>% select(country=ï..country,everything())
+
+```
+
+Column {.sidebar}
+======================================================================
+### Filtros
+
+```{r}
+selectInput("pais", "Países", choices = unique(df$country))
+
+```
+
+Mapa
+=======================================================================
+
+Column {data-width=400,data-height=600}
+-----------------------------------------------------------------------
+
+### Mapa
+
+```{r}
+world <- map("world", fill=TRUE, plot=FALSE)
+world_map <- map2SpatialPolygons(world, sub(":.*$", "", world$names))
+world_map <- SpatialPolygonsDataFrame(world_map,
+                                      data.frame(country=names(world_map), 
+                                                 stringsAsFactors=FALSE), 
+                                      FALSE)
+
+renderLeaflet(
+leaflet(subset(world_map, country %in% input$pais)) %>% 
+  addTiles() %>% 
+  addPolygons(weight=1) %>% 
+  setView(lng = -1.5, lat = 53.4, zoom = 2))
+
+```
+
+Resumo de informações
+=======================================================================
+
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### Resumo de informações
+
+```{r}
+renderDataTable(
+  df %>% filter(df$country == input$pais) %>% select(1:7)
+)
+```
+
+Row {data-width=400}
+-----------------------------------------------------------------------
+
+### Gráfico de faixa etária
+
+```{r}
+df$suicides_100k.pop = as.numeric(df$suicides_100k.pop)
+
+renderPlot(
+    ggplot(data = df %>% 
+                      select(1,4,7) %>% 
+                      group_by(country,age) %>%
+                      summarise_all(mean) %>% 
+                      filter(country == input$pais)) +
+             aes(x = age, weight = suicides_100k.pop) +
+             geom_bar(fill = "#ef3b2c", position = "dodge") +
+             labs(title = "Média por faixa etária",
+             x = "Faixa Etária",
+             y = "Média de suicidio",
+             subtitle = input$pais) +
+             theme_minimal()
+ )
+```
+
+### Gráfico anual
+
+```{r}
+df$suicides_100k.pop = as.numeric(df$suicides_100k.pop)
+
+renderPlot(
+    ggplot(data = df %>% 
+                      select(1,2,7) %>% 
+                      group_by(country,year) %>%
+                      summarise_all(sum) %>% 
+                      filter(country == input$pais)) +
+             aes(x = year, y = suicides_100k.pop) +
+             geom_line(fill = "#ef3b2c") +
+             labs(title = "Quantidade de suicidio por ano",
+             x = "Ano",
+             y = "Qtd.suicidio",
+             subtitle = input$pais) +
+             theme_minimal()
+ )
+```
+
+
+
+
+
+
+
+

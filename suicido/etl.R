@@ -1,0 +1,6 @@
+library(tidyverse)
+library(magrittr)
+df <- read.csv2("master.csv",fileEncoding = "latin1",sep=";")
+df %<>% select(country=ï..country,everything())
+head(df)
+unique(df$year)
