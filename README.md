@@ -1,5 +1,5 @@
 # Produtos e Relatórios
 
-- Exemplos de relatórios gerenciais
-- Exemplos de dasboard estaticos
-- Exemplos de dasboard dinâmicos
+- Exemplos de relatórios gerenciais.
+- Exemplos de dashboard estaticos.
+- Exemplos de dashboard dinâmicos.
